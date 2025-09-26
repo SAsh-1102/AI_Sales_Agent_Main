@@ -4,3 +4,9 @@ python-dotenv==1.0.1
 openai==1.45.0  #remove this  
 gTTS==2.5.1
 pydub==0.25.1
+pip install django==5.2.6
+ 
+pip install asgiref
+pip install djangorestframework
+pip install python-dotenv
+python -m

@@ -1,0 +1,129 @@
+/* General Page Styling */
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* Title */
+h1 {
+  margin-top: 20px;
+  font-size: 2rem;
+  text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+}
+
+/* Interface Boxes */
+#loginInterface, 
+#callInterface {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  padding: 20px;
+  width: 400px;
+  margin: 30px auto;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Inputs */
+input {
+  padding: 10px;
+  width: 70%;
+  border: none;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* Buttons */
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 5px;
+  color: white;
+  transition: all 0.2s ease-in-out;
+}
+
+#loginBtn, #callBtn { background: #007bff; }
+#answerBtn { background: #28a745; }
+#endCallBtn { background: #dc3545; }
+
+button:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+/* Video Section */
+#videos {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+video {
+  width: 300px;
+  height: 200px;
+  border-radius: 12px;
+  margin: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  background: black;
+}
+
+/* Error Messages */
+#errorMessage {
+  color: #ff4d4d;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Dial Pad Styling (if used later) */
+.dialWrapper,
+.incomingWrapper {
+  width: 300px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 15px;
+  margin: 20px auto;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.dialNumpadHWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.dialNumber,
+.actionButton,
+.dialActionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  color: white;
+}
+
+.dialNumber {
+  width: 100px;
+  height: 50px;
+  margin: 5px;
+}
+
+.actionButton {
+  width: 100px;
+  height: 50px;
+  margin: 10px;
+}
+
+.dialActionButton {
+  width: 80px;
+  height: 40px;
+  font-size: larger;
+  margin: 10px;
+}

@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebRTC Call</title>
+    <link rel="stylesheet" href="{% static 'call.css' %}">
+</head>
+<body>
+    <h1>WebRTC Call Demo</h1>
+
+    <!-- LOGIN INTERFACE -->
+    <div id="loginInterface">
+        <h3>Login</h3>
+        <input type="text" id="loginName" placeholder="Enter your name">
+        <button id="loginBtn">Login</button>
+    </div>
+
+    <!-- CALL INTERFACE -->
+    <div id="callInterface">
+        <div id="call">
+            <h3>Start a Call</h3>
+            <input type="text" id="callName" placeholder="Enter user to call">
+            <button id="callBtn">Call</button>
+        </div>
+
+        <!-- Incoming Call -->
+        <div id="incomingCall" style="display:none;">
+            <h3>Incoming Call from <span id="callerNameIncoming"></span></h3>
+            <button id="answerBtn">Answer</button>
+        </div>
+
+        <!-- Calling Display -->
+        <div id="calling" style="display:none;">
+            <h3>Calling...</h3>
+        </div>
+
+        <!-- In Call -->
+        <div id="inCall" style="display:none;">
+            <h3>In Call with <span id="callerNameInCall"></span></h3>
+            <button id="endCallBtn">End Call</button>
+        </div>
+
+        <!-- Video Section -->
+        <div id="videos" style="display:none;">
+            <video id="localVideo" autoplay muted></video>
+            <video id="remoteVideo" autoplay></video>
+        </div>
+    </div>
+
+    <!-- ✅ JS files -->
+    <script src="{% static 'call.js' %}"></script>
+    <script src="{% static 'js/chat.js' %}"></script>
+</body>
+</html>

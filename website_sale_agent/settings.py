@@ -6,11 +6,21 @@ TIME_ZONE = 'Asia/Karachi'
 USE_TZ = True
 
 
+    
+#ASGI_APPLICATION = "website_sale_agent.asgi.application"
+
+
+CHANNEL_LAYERS={
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+
 # Load environment variables from .env if exists
 load_dotenv()
 
 # Base directory (where manage.py is located)
-BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY
 SECRET_KEY = "django-insecure-your_secret_key_here"
@@ -27,6 +37,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "agent",
+    "call",     
+    "channels",
 ]
 
 # Middleware
@@ -42,23 +54,25 @@ MIDDLEWARE = [
 
 # URLs
 ROOT_URLCONF = "website_sale_agent.urls"
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Templates
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # templates folder at same level as manage.py
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / "templates"],  # your global templates folder
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
+
 
 # WSGI & ASGI
 WSGI_APPLICATION = "website_sale_agent.wsgi.application"
@@ -76,8 +90,10 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = []
 
 # Static files
-STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]  # static folder at same level as manage.py
+STATIC_URL = 'static/'
+import os
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+  # static folder at same level as manage.py
 
 # Default auto field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -32,6 +32,11 @@ async function sendMessageToBackend(messageData) {
     addMessage('bot', 'Error contacting server.');
   }
 }
+const sendBtn = document.getElementById('sendBtn');
+const inputEl = document.getElementById('chatInput');
+const chatEl = document.getElementById('chatMessages');
+const debugEl = document.getElementById('debug');
+const micBtn = document.getElementById('micBtn');
 
 // Text send - CHANGED TO SEND JSON
 sendBtn.addEventListener('click', () => {
