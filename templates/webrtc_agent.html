@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Agent - WebRTC Calling</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .call-panel {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .call-panel h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #e53e3e;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .status-waiting {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .status-calling {
+            background: #e6fffa;
+            color: #234e52;
+        }
+
+        .status-connected {
+            background: #f0fff4;
+            color: #22543d;
+        }
+
+        .conversation-log {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .conversation-log h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .message-customer {
+            background: #edf2f7;
+            margin-right: 20px;
+        }
+
+        .message-agent {
+            background: #e6fffa;
+            margin-left: 20px;
+        }
+
+        .message strong {
+            color: #2d3748;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .message p {
+            color: #4a5568;
+            margin: 0;
+        }
+
+        .audio-controls {
+            display: none;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .audio-controls.active {
+            display: flex;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mute-btn {
+            background: #4a5568;
+            color: white;
+        }
+
+        .mute-btn.muted {
+            background: #f56565;
+        }
+
+        .instructions {
+            grid-column: 1 / -1;
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .instructions h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            color: #4a5568;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Sales Agent Dashboard</h1>
+            <p>Make outbound calls to customers via WebRTC</p>
+        </div>
+
+        <div class="main-content">
+            <div class="call-panel">
+                <h2>📞 Call Customer</h2>
+                
+                <span id="status-badge" class="status-badge status-waiting">⏳ Ready</span>
+
+                <div class="input-group">
+                    <label for="agent-id">Your Agent ID:</label>
+                    <input type="text" id="agent-id" value="agent_001" readonly>
+                </div>
+
+                <div class="input-group">
+                    <label for="customer-id">Customer ID to Call:</label>
+                    <input type="text" id="customer-id" placeholder="e.g., customer_123">
+                </div>
+
+                <button class="btn btn-primary" id="start-call-btn" onclick="initiateCall()">
+                    📞 Start Call
+                </button>
+
+                <button class="btn btn-danger" id="end-call-btn" onclick="endCall()" disabled>
+                    📵 End Call
+                </button>
+
+                <div class="audio-controls" id="audio-controls">
+                    <button class="audio-btn mute-btn" id="mute-btn" onclick="toggleMute()">
+                        🎤
+                    </button>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+                    <p style="color: #4a5568; font-size: 14px;">
+                        <strong>Call Info:</strong><br>
+                        Connected to: <span id="connected-to">None</span><br>
+                        Duration: <span id="call-duration">00:00</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="call-panel">
+                <h2>💬 Live Conversation</h2>
+                
+                <div class="conversation-log" id="conversation-log">
+                    <p style="color: #718096; text-align: center;">Start a call to see the conversation...</p>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h3>📋 How to Use:</h3>
+                <ol>
+                    <li><strong>Share Customer Link:</strong> Send customer the link: 
+                        <code>http://yoursite.com/webrtc/customer/?id=customer_123</code></li>
+                    <li><strong>Enter Customer ID:</strong> Type the same ID in the field above</li>
+                    <li><strong>Start Call:</strong> Click "Start Call" button</li>
+                    <li><strong>AI Handles Conversation:</strong> Your AI agent will automatically process customer speech and respond</li>
+                    <li><strong>Monitor:</strong> Watch the live conversation in real-time</li>
+                </ol>
+            </div>
+        </div>
+
+        <audio id="localAudio" muted></audio>
+        <audio id="remoteAudio" autoplay></audio>
+    </div>
+
+    <script>
+        let peerConnection = null;
+        let localStream = null;
+        let remoteStream = null;
+        let isCallActive = false;
+        let isMuted = false;
+        let myId = 'agent_001';
+        let targetId = null;
+        let pollingInterval = null;
+        let callStartTime = null;
+        let durationInterval = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isProcessing = false;
+
+        const config = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        async function initiateCall() {
+            targetId = document.getElementById('customer-id').value.trim();
+            if (!targetId) {
+                alert('Please enter a customer ID');
+                return;
+            }
+
+            try {
+                updateStatus('Getting microphone...', 'calling');
+                
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }, 
+                    video: false 
+                });
+                
+                document.getElementById('localAudio').srcObject = localStream;
+                
+                peerConnection = new RTCPeerConnection(config);
+                
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+                
+                peerConnection.ontrack = handleRemoteTrack;
+                peerConnection.onicecandidate = handleIceCandidate;
+                
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                
+                await sendSignal('offer', {
+                    offer: offer
+                });
+                
+                startPolling();
+                updateStatus('Calling customer...', 'calling');
+                document.getElementById('connected-to').textContent = targetId;
+                toggleCallButtons(true);
+                
+            } catch (error) {
+                console.error('Error starting call:', error);
+                alert('Failed to start call: ' + error.message);
+                updateStatus('Ready', 'waiting');
+            }
+        }
+
+        function handleRemoteTrack(event) {
+            remoteStream = event.streams[0];
+            document.getElementById('remoteAudio').srcObject = remoteStream;
+            
+            if (!isCallActive) {
+                isCallActive = true;
+                updateStatus('Connected', 'connected');
+                document.getElementById('audio-controls').classList.add('active');
+                startCallDuration();
+                startAudioProcessing();
+                addMessage('System', 'Call connected! AI agent is now active.');
+            }
+        }
+
+        function handleIceCandidate(event) {
+            if (event.candidate) {
+                sendSignal('ice-candidate', {
+                    candidate: event.candidate
+                });
+            }
+        }
+
+        async function sendSignal(type, data) {
+            try {
+                const response = await fetch('/agent/api/webrtc/signal/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: type,
+                        from: myId,
+                        to: targetId,
+                        data: data
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Signaling failed');
+                }
+            } catch (error) {
+                console.error('Error sending signal:', error);
+            }
+        }
+
+        function startPolling() {
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/agent/api/webrtc/poll/?peer_id=${myId}`);
+                    const data = await response.json();
+                    
+                    if (data.signals && data.signals.length > 0) {
+                        for (const signal of data.signals) {
+                            await handleSignal(signal);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 1000);
+        }
+
+        async function handleSignal(signal) {
+            try {
+                switch (signal.type) {
+                    case 'answer':
+                        await peerConnection.setRemoteDescription(signal.data.answer);
+                        break;
+                    case 'ice-candidate':
+                        await peerConnection.addIceCandidate(signal.data.candidate);
+                        break;
+                }
+            } catch (error) {
+                console.error('Error handling signal:', error);
+            }
+        }
+
+        function startAudioProcessing() {
+            if (!remoteStream) return;
+
+            try {
+                mediaRecorder = new MediaRecorder(remoteStream, {
+                    mimeType: 'audio/webm'
+                });
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    if (audioChunks.length > 0 && !isProcessing) {
+                        await processAudioChunk();
+                    }
+                };
+
+                // Record in 5-second chunks
+                mediaRecorder.start();
+                setInterval(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording' && isCallActive) {
+                        mediaRecorder.stop();
+                        mediaRecorder.start();
+                    }
+                }, 5000);
+
+            } catch (error) {
+                console.error('Error starting audio processing:', error);
+            }
+        }
+
+        async function processAudioChunk() {
+            if (isProcessing || audioChunks.length === 0) return;
+            
+            isProcessing = true;
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioChunks = [];
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'audio.webm');
+                formData.append('session_id', `webrtc_${targetId}`);
+
+                const response = await fetch('/agent/agent/api/webrtc/process-audio/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.user_text) {
+                        addMessage('Customer', data.user_text);
+                    }
+                    
+                    if (data.agent_text) {
+                        addMessage('AI Agent', data.agent_text);
+                    }
+
+                    // Play AI response audio
+                    if (data.audio_base64) {
+                        const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
+                        
+                        // Send AI audio to customer through WebRTC
+                        const audioContext = new AudioContext();
+                        const source = audioContext.createMediaElementSource(audio);
+                        const destination = audioContext.createMediaStreamDestination();
+                        source.connect(destination);
+                        
+                        audio.play();
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing audio:', error);
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        function endCall() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            if (durationInterval) {
+                clearInterval(durationInterval);
+            }
+            
+            document.getElementById('localAudio').srcObject = null;
+            document.getElementById('remoteAudio').srcObject = null;
+            document.getElementById('audio-controls').classList.remove('active');
+            
+            updateStatus('Ready', 'waiting');
+            document.getElementById('connected-to').textContent = 'None';
+            document.getElementById('call-duration').textContent = '00:00';
+            
+            toggleCallButtons(false);
+            isCallActive = false;
+            
+            addMessage('System', 'Call ended.');
+        }
+
+        function toggleMute() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    isMuted = !audioTrack.enabled;
+                    
+                    const btn = document.getElementById('mute-btn');
+                    btn.textContent = isMuted ? '🔇' : '🎤';
+                    btn.classList.toggle('muted', isMuted);
+                }
+            }
+        }
+
+        function toggleCallButtons(active) {
+            document.getElementById('start-call-btn').disabled = active;
+            document.getElementById('end-call-btn').disabled = !active;
+        }
+
+        function updateStatus(text, type) {
+            const badge = document.getElementById('status-badge');
+            badge.textContent = text;
+            badge.className = `status-badge status-${type}`;
+        }
+
+        function startCallDuration() {
+            callStartTime = Date.now();
+            durationInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                document.getElementById('call-duration').textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        function addMessage(sender, text) {
+            const log = document.getElementById('conversation-log');
+            
+            if (log.querySelector('p')) {
+                log.innerHTML = '';
+            }
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = sender === 'Customer' ? 'message message-customer' : 'message message-agent';
+            msgDiv.innerHTML = `<strong>${sender}:</strong><p>${text}</p>`;
+            
+            log.appendChild(msgDiv);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (isCallActive) {
+                endCall();
+            }
+        });
+    </script>
+</body>
+</html>

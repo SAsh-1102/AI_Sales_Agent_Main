@@ -28,7 +28,14 @@ INSTALLED_APPS = [
     "rest_framework",
     "agent",
 ]
+# settings.py
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
 # Middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

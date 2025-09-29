@@ -437,3 +437,171 @@ def voice_api(request):
     except Exception as e:
         logger.error(f"Unexpected error in voice_api: {str(e)}")
         return JsonResponse({"error": "Internal server error"}, status=500)
+    
+# Add these views to your views.py file
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def webrtc_signal(request):
+    """
+    Simple HTTP-based signaling for WebRTC.
+    Stores signals in session/database for the target peer to retrieve.
+    """
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        signal_type = data.get("type")  # "offer", "answer", "ice-candidate"
+        from_peer = data.get("from")
+        to_peer = data.get("to")
+        signal_data = data.get("data")
+        
+        if not all([signal_type, from_peer, to_peer]):
+            return JsonResponse({"error": "Missing required fields"}, status=400)
+        
+        # Store signal temporarily (you can use cache, Redis, or database)
+        # For simplicity, using Django's cache framework
+        from django.core.cache import cache
+        
+        signal_key = f"webrtc_signal_{to_peer}"
+        signals = cache.get(signal_key, [])
+        signals.append({
+            "type": signal_type,
+            "from": from_peer,
+            "data": signal_data,
+            "timestamp": datetime.now(PAKISTAN_TZ).isoformat()
+        })
+        
+        # Keep only last 10 signals, expire in 5 minutes
+        cache.set(signal_key, signals[-10:], timeout=300)
+        
+        return JsonResponse({"status": "signal_stored"})
+        
+    except Exception as e:
+        logger.error(f"Error in webrtc_signal: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def webrtc_poll(request):
+    """
+    Poll for pending WebRTC signals for a specific peer.
+    """
+    try:
+        peer_id = request.GET.get("peer_id")
+        if not peer_id:
+            return JsonResponse({"error": "peer_id required"}, status=400)
+        
+        from django.core.cache import cache
+        
+        signal_key = f"webrtc_signal_{peer_id}"
+        signals = cache.get(signal_key, [])
+        
+        # Clear signals after retrieval
+        cache.delete(signal_key)
+        
+        return JsonResponse({"signals": signals})
+        
+    except Exception as e:
+        logger.error(f"Error in webrtc_poll: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def webrtc_agent(request):
+    """
+    Render the AI agent calling interface.
+    """
+    return render(request, "webrtc_agent.html")
+
+
+def webrtc_customer(request):
+    """
+    Render the customer receiving interface.
+    """
+    customer_id = request.GET.get("id", f"customer_{datetime.now().timestamp()}")
+    return render(request, "webrtc_customer.html", {"customer_id": customer_id})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def webrtc_process_audio(request):
+    """
+    Process audio from WebRTC call through your AI agent.
+    This receives audio, converts to text, processes through AI, returns audio response.
+    """
+    try:
+        audio_file = request.FILES.get("audio")
+        session_id = request.POST.get("session_id", "webrtc_call")
+        
+        if not audio_file:
+            return JsonResponse({"error": "No audio file provided"}, status=400)
+        
+        # Save temporary audio file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            for chunk in audio_file.chunks():
+                tmp.write(chunk)
+            temp_path = tmp.name
+        
+        try:
+            # 1. Convert speech to text using your existing function
+            user_text = speech_to_text(temp_path)
+            logger.info(f"Customer said: {user_text}")
+            
+            # Clean up temp file
+            os.remove(temp_path)
+            
+            if "STT service failed" in user_text or "could not understand" in user_text:
+                return JsonResponse({"error": user_text}, status=400)
+            
+            # 2. Save user message
+            save_message(session_id, "user", user_text)
+            
+            # 3. Get conversation history
+            history = get_history(session_id, limit=10)
+            
+            # 4. Search for products
+            products_info = extract_intent_and_search(user_text)
+            
+            # 5. Create system prompt
+            system_prompt = create_dynamic_system_prompt(products_info)
+            
+            # 6. Build messages for AI
+            messages = [{"role": "system", "content": system_prompt}]
+            for h in history:
+                role = "assistant" if h.sender == "agent" else "user"
+                messages.append({"role": role, "content": h.message})
+            messages.append({"role": "user", "content": user_text})
+            
+            # 7. Get AI response
+            ai_response, error = call_groq_api(messages)
+            
+            if not ai_response:
+                ai_response = "I'm having trouble processing that. Could you repeat?"
+            
+            # 8. Save agent response
+            save_message(session_id, "agent", ai_response)
+            
+            # 9. Convert AI response to speech using your existing function
+            audio_path = text_to_speech(ai_response)
+            
+            # 10. Read audio file and encode as base64
+            with open(audio_path, "rb") as f:
+                audio_bytes = f.read()
+            os.remove(audio_path)
+            audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
+            
+            return JsonResponse({
+                "user_text": user_text,
+                "agent_text": ai_response,
+                "audio_base64": audio_base64,
+                "products_found": products_info["product_count"]
+            })
+            
+        except Exception as e:
+            logger.error(f"Error processing audio: {str(e)}")
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            return JsonResponse({"error": f"Processing failed: {str(e)}"}, status=500)
+            
+    except Exception as e:
+        logger.error(f"Unexpected error in webrtc_process_audio: {str(e)}")
+        return JsonResponse({"error": "Internal server error"}, status=500)    
