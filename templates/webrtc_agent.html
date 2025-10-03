@@ -393,20 +393,33 @@
                 updateStatus('Ready', 'waiting');
             }
         }
-
         function handleRemoteTrack(event) {
-            remoteStream = event.streams[0];
-            document.getElementById('remoteAudio').srcObject = remoteStream;
-            
-            if (!isCallActive) {
-                isCallActive = true;
-                updateStatus('Connected', 'connected');
-                document.getElementById('audio-controls').classList.add('active');
-                startCallDuration();
-                startAudioProcessing();
-                addMessage('System', 'Call connected! AI agent is now active.');
-            }
-        }
+           if (!remoteStream) {
+               remoteStream = new MediaStream();
+               document.getElementById('remoteAudio').srcObject = remoteStream;
+    }
+           event.streams[0].getTracks().forEach(track => {
+              remoteStream.addTrack(track);
+    });
+
+           if (!isCallActive) {
+               isCallActive = true;
+               updateStatus('Connected', 'connected');
+               document.getElementById('audio-controls').classList.add('active');
+               startCallDuration();
+               startAudioProcessing();
+               addMessage('System', 'Call connected! AI agent is now active.');
+
+        // 👇 agent welcome bolega
+               const welcomeText = "🤖 Welcome! I'm your AI sales assistant. How can I help you today?";
+               addMessage('AI Agent', welcomeText);
+
+               
+        // ye audio sirf CUSTOMER ko milega (agent pe local play avoid karna)
+               playAIResponse(welcomeText);
+    }
+}
+
 
         function handleIceCandidate(event) {
             if (event.candidate) {

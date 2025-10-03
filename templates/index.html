@@ -112,19 +112,24 @@
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ session_id: sessionId, message: text })
         });
-        const data = await res.json();
+       const data = await res.json();
 
-        typingEl.remove();
+typingEl.remove();
 
-        const botTime = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Karachi', hour12: true });
-        addMessage('bot', data.reply, botTime);
+const botTime = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Karachi', hour12: true });
+addMessage('bot', data.reply, botTime);
 
-        setLeadStage(data.lead_stage || 'cold');
-        setEmotion(data.emotion || 'neutral');
+setLeadStage(data.lead_stage || 'cold');
+setEmotion(data.emotion || 'neutral');
 
-        const utterance = new SpeechSynthesisUtterance(data.reply.replace("__TABLE__", ""));
-        utterance.lang = "en-US";
-        speechSynthesis.speak(utterance);
+// 🔊 Voice playback — purana stop karo, naya bolo
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.cancel(); // pehle wala speech turant stop
+  const utterance = new SpeechSynthesisUtterance(data.reply.replace("__TABLE__", ""));
+  utterance.lang = "en-US";
+  window.speechSynthesis.speak(utterance);
+}
+
 
       } catch (err) {
         console.error(err);
@@ -204,3 +209,4 @@
   </script>
 </body>
 </html>
+

@@ -1,4 +1,6 @@
 // Send message to backend
+let currentAudio = null;
+
 async function sendMessageToBackend(messageData) {
   addMessage('bot', 'Sales Agent is processing...');
   try {
@@ -105,7 +107,7 @@ micBtn.addEventListener('click', async () => {
       console.error(err);
       addMessage('bot', 'Error processing audio.');
     }
-  };
+  }
 
   mediaRecorder.start();
   addMessage('user', '🎤 Recording...');
